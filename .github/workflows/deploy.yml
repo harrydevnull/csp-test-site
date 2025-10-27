@@ -1,0 +1,223 @@
+name: Build and Deploy to Linode
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  GO_VERSION: '1.21'
+  APP_NAME: 'csp-test-site'
+  
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+    
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    
+    - name: Download dependencies
+      run: go mod download
+    
+    - name: Run tests
+      run: go test -v ./...
+    
+    - name: Run go vet
+      run: go vet ./...
+    
+    - name: Build application
+      run: go build -v ./...
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+    
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    
+    - name: Download dependencies
+      run: go mod download
+    
+    - name: Build for Linux AMD64
+      env:
+        GOOS: linux
+        GOARCH: amd64
+        CGO_ENABLED: 0
+      run: |
+        go build -ldflags="-s -w" -o ${{ env.APP_NAME }} main.go
+        chmod +x ${{ env.APP_NAME }}
+    
+    - name: Create deployment package
+      run: |
+        mkdir -p deploy
+        cp ${{ env.APP_NAME }} deploy/
+        cp *.html deploy/
+        cp README.md deploy/
+        tar -czf ${{ env.APP_NAME }}-${{ github.sha }}.tar.gz -C deploy .
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ env.APP_NAME }}-${{ github.sha }}
+        path: ${{ env.APP_NAME }}-${{ github.sha }}.tar.gz
+        retention-days: 30
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: ${{ env.APP_NAME }}-${{ github.sha }}
+    
+    - name: Setup SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.LINODE_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.LINODE_HOST }} >> ~/.ssh/known_hosts
+    
+    - name: Deploy to Linode
+      run: |
+        # Upload the deployment package
+        scp ${{ env.APP_NAME }}-${{ github.sha }}.tar.gz ${{ secrets.LINODE_USER }}@${{ secrets.LINODE_HOST }}:/tmp/
+        
+        # Deploy on the server
+        ssh ${{ secrets.LINODE_USER }}@${{ secrets.LINODE_HOST }} << 'EOF'
+          set -e
+          
+          # Configuration
+          APP_NAME="${{ env.APP_NAME }}"
+          APP_DIR="/opt/$APP_NAME"
+          SERVICE_NAME="$APP_NAME"
+          BACKUP_DIR="/opt/$APP_NAME-backup-$(date +%Y%m%d-%H%M%S)"
+          
+          # Create application directory if it doesn't exist
+          sudo mkdir -p $APP_DIR
+          
+          # Backup current version if it exists
+          if [ -d "$APP_DIR" ] && [ "$(ls -A $APP_DIR)" ]; then
+            echo "Creating backup of current version..."
+            sudo cp -r $APP_DIR $BACKUP_DIR
+          fi
+          
+          # Stop the service if it's running
+          if sudo systemctl is-active --quiet $SERVICE_NAME; then
+            echo "Stopping $SERVICE_NAME service..."
+            sudo systemctl stop $SERVICE_NAME
+          fi
+          
+          # Extract new version
+          echo "Deploying new version..."
+          cd /tmp
+          tar -xzf $APP_NAME-${{ github.sha }}.tar.gz
+          sudo cp -r * $APP_DIR/
+          sudo chown -R ${{ secrets.LINODE_USER }}:${{ secrets.LINODE_USER }} $APP_DIR
+          sudo chmod +x $APP_DIR/$APP_NAME
+          
+          # Create or update systemd service
+          sudo tee /etc/systemd/system/$SERVICE_NAME.service > /dev/null << 'SERVICE_EOF'
+        [Unit]
+        Description=CSP Test Site Go Application
+        After=network.target
+        
+        [Service]
+        Type=simple
+        User=${{ secrets.LINODE_USER }}
+        WorkingDirectory=/opt/${{ env.APP_NAME }}
+        ExecStart=/opt/${{ env.APP_NAME }}/${{ env.APP_NAME }}
+        Restart=always
+        RestartSec=5
+        Environment=PORT=8080
+        Environment=HOST=0.0.0.0
+        
+        # Security settings
+        NoNewPrivileges=true
+        PrivateTmp=true
+        ProtectSystem=strict
+        ProtectHome=true
+        ReadWritePaths=/opt/${{ env.APP_NAME }}
+        
+        [Install]
+        WantedBy=multi-user.target
+        SERVICE_EOF
+          
+          # Reload systemd and start the service
+          sudo systemctl daemon-reload
+          sudo systemctl enable $SERVICE_NAME
+          sudo systemctl start $SERVICE_NAME
+          
+          # Wait for service to start and check status
+          sleep 5
+          if sudo systemctl is-active --quiet $SERVICE_NAME; then
+            echo "✅ Deployment successful! Service is running."
+            sudo systemctl status $SERVICE_NAME --no-pager
+          else
+            echo "❌ Deployment failed! Service is not running."
+            sudo systemctl status $SERVICE_NAME --no-pager
+            exit 1
+          fi
+          
+          # Cleanup
+          rm -f /tmp/$APP_NAME-${{ github.sha }}.tar.gz
+          rm -f /tmp/$APP_NAME /tmp/*.html /tmp/README.md
+          
+          # Keep only last 5 backups
+          cd /opt
+          ls -dt $APP_NAME-backup-* 2>/dev/null | tail -n +6 | sudo xargs rm -rf
+          
+        EOF
+    
+    - name: Health Check
+      run: |
+        echo "Performing health check..."
+        sleep 10
+        
+        # Test if the application is responding
+        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.LINODE_HOST }}:8080/ || echo "000")
+        
+        if [ "$HTTP_STATUS" = "200" ]; then
+          echo "✅ Health check passed! Application is responding."
+        else
+          echo "❌ Health check failed! HTTP status: $HTTP_STATUS"
+          exit 1
+        fi
+    
+    - name: Cleanup SSH
+      if: always()
+      run: |
+        rm -f ~/.ssh/id_rsa
