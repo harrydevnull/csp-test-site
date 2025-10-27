@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSP Testing Site - Alternative Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f8ff;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 2px solid #007bff;
+        }
+        h1 {
+            color: #007bff;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .info-box {
+            background-color: #e7f3ff;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+            border-left: 4px solid #007bff;
+        }
+        .test-button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background-color: #218838;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .back-link:hover {
+            background-color: #545b62;
+        }
+        #test-results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            min-height: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CSP Testing Site - Alternative Page</h1>
+        
+        <div class="info-box">
+            <h3>Alternative Test Page</h3>
+            <p>This is the alternative HTML page used by some CSP test endpoints (csp42, csp43, csp44).</p>
+            <p>It's designed to test different CSP policies with a different HTML structure.</p>
+        </div>
+
+        <div class="info-box">
+            <h3>CSP Policy Tests</h3>
+            <p>Use the buttons below to test various aspects of the current CSP policy:</p>
+            
+            <button class="test-button" onclick="testInlineScript()">Test Inline Script</button>
+            <button class="test-button" onclick="testEval()">Test Eval</button>
+            <button class="test-button" onclick="testDynamicScript()">Test Dynamic Script</button>
+            <button class="test-button" onclick="testNonce()">Test Nonce Script</button>
+            
+            <div id="test-results">
+                <strong>Test Results:</strong><br>
+                <span id="results-content">Click a test button to see results...</span>
+            </div>
+        </div>
+
+        <a href="/" class="back-link">← Back to Main Page</a>
+    </div>
+
+    <script>
+        function logResult(test, success, details) {
+            const resultsContent = document.getElementById('results-content');
+            const timestamp = new Date().toLocaleTimeString();
+            const status = success ? '✅ PASSED' : '❌ BLOCKED';
+            const newResult = `[${timestamp}] ${test}: ${status} - ${details}`;
+            
+            if (resultsContent.textContent === 'Click a test button to see results...') {
+                resultsContent.innerHTML = newResult;
+            } else {
+                resultsContent.innerHTML += '<br>' + newResult;
+            }
+        }
+
+        function testInlineScript() {
+            try {
+                // This is an inline script test
+                const result = 2 + 2;
+                logResult('Inline Script', true, `Calculation successful: 2+2=${result}`);
+            } catch (e) {
+                logResult('Inline Script', false, e.message);
+            }
+        }
+
+        function testEval() {
+            try {
+                const result = eval('3 * 4');
+                logResult('Eval Test', true, `Eval successful: 3*4=${result}`);
+            } catch (e) {
+                logResult('Eval Test', false, e.message);
+            }
+        }
+
+        function testDynamicScript() {
+            try {
+                const script = document.createElement('script');
+                script.textContent = `
+                    window.dynamicScriptTest = function() {
+                        return 'Dynamic script executed successfully';
+                    };
+                    console.log('Dynamic script loaded');
+                `;
+                document.head.appendChild(script);
+                
+                // Test if the function was created
+                setTimeout(() => {
+                    if (typeof window.dynamicScriptTest === 'function') {
+                        const result = window.dynamicScriptTest();
+                        logResult('Dynamic Script', true, result);
+                    } else {
+                        logResult('Dynamic Script', false, 'Function not created');
+                    }
+                }, 100);
+                
+            } catch (e) {
+                logResult('Dynamic Script', false, e.message);
+            }
+        }
+
+        function testNonce() {
+            // Check if current script has nonce
+            const scripts = document.querySelectorAll('script');
+            let hasNonce = false;
+            
+            scripts.forEach(script => {
+                if (script.nonce || script.getAttribute('nonce')) {
+                    hasNonce = true;
+                }
+            });
+            
+            if (hasNonce) {
+                logResult('Nonce Test', true, 'Script with nonce found and executed');
+            } else {
+                logResult('Nonce Test', false, 'No nonce found on scripts');
+            }
+        }
+
+        // Auto-run basic tests on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Alternative CSP test page loaded');
+            
+            // Auto-test inline scripts
+            setTimeout(() => {
+                testInlineScript();
+            }, 500);
+        });
+    </script>
+
+    <!-- Test script with nonce (for nonce-related tests) -->
+    <script nonce="5843b9e95a432059d901fb701597edf0">
+        console.log('Script with nonce executed');
+        window.nonceScriptLoaded = true;
+    </script>
+</body>
+</html>

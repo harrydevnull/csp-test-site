@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSP Testing Site</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .endpoint-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .endpoint-link {
+            display: block;
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+        .endpoint-link:hover {
+            background-color: #0056b3;
+        }
+        .section {
+            margin: 30px 0;
+        }
+        .section h2 {
+            color: #555;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+        }
+        .csp-info {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .test-script {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #fff3cd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CSP Testing Site</h1>
+        
+        <div class="csp-info">
+            <strong>Current CSP Policy:</strong> <span id="csp-policy">Loading...</span>
+        </div>
+
+        <div class="section">
+            <h2>Login Endpoints (Basic CSP)</h2>
+            <div class="endpoint-list">
+                <a href="/login1" class="endpoint-link">Login 1</a>
+                <a href="/login2" class="endpoint-link">Login 2</a>
+                <a href="/login3" class="endpoint-link">Login 3</a>
+                <a href="/login4" class="endpoint-link">Login 4</a>
+                <a href="/login5" class="endpoint-link">Login 5</a>
+                <a href="/login6" class="endpoint-link">Login 6</a>
+                <a href="/login7" class="endpoint-link">Login 7</a>
+                <a href="/login8" class="endpoint-link">Login 8</a>
+                <a href="/login9" class="endpoint-link">Login 9</a>
+                <a href="/login10" class="endpoint-link">Login 10</a>
+                <a href="/login11" class="endpoint-link">Login 11</a>
+                <a href="/login12" class="endpoint-link">Login 12</a>
+                <a href="/login13" class="endpoint-link">Login 13</a>
+                <a href="/login14" class="endpoint-link">Login 14</a>
+                <a href="/login15" class="endpoint-link">Login 15</a>
+                <a href="/login16" class="endpoint-link">Login 16</a>
+                <a href="/login17" class="endpoint-link">Login 17</a>
+                <a href="/login18" class="endpoint-link">Login 18</a>
+                <a href="/login19" class="endpoint-link">Login 19</a>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Login Endpoints (With Nonce)</h2>
+            <div class="endpoint-list">
+                <a href="/login1x" class="endpoint-link">Login 1x</a>
+                <a href="/login2x" class="endpoint-link">Login 2x</a>
+                <a href="/login3x" class="endpoint-link">Login 3x</a>
+                <a href="/login4x" class="endpoint-link">Login 4x</a>
+                <a href="/login5x" class="endpoint-link">Login 5x</a>
+                <a href="/login6x" class="endpoint-link">Login 6x</a>
+                <a href="/login7x" class="endpoint-link">Login 7x</a>
+                <a href="/login8x" class="endpoint-link">Login 8x</a>
+                <a href="/login9x" class="endpoint-link">Login 9x</a>
+                <a href="/login10x" class="endpoint-link">Login 10x</a>
+                <a href="/login11x" class="endpoint-link">Login 11x</a>
+                <a href="/login12x" class="endpoint-link">Login 12x</a>
+                <a href="/login13x" class="endpoint-link">Login 13x</a>
+                <a href="/login14x" class="endpoint-link">Login 14x</a>
+                <a href="/login15x" class="endpoint-link">Login 15x</a>
+                <a href="/login16x" class="endpoint-link">Login 16x</a>
+                <a href="/login17x" class="endpoint-link">Login 17x</a>
+                <a href="/login18x" class="endpoint-link">Login 18x</a>
+                <a href="/login19x" class="endpoint-link">Login 19x</a>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>CSP Test Endpoints</h2>
+            <div class="endpoint-list">
+                <a href="/csp1" class="endpoint-link">CSP 1</a>
+                <a href="/csp2" class="endpoint-link">CSP 2</a>
+                <a href="/csp8" class="endpoint-link">CSP 8</a>
+                <a href="/csp10" class="endpoint-link">CSP 10</a>
+                <a href="/csp11" class="endpoint-link">CSP 11</a>
+                <a href="/csp12" class="endpoint-link">CSP 12</a>
+                <a href="/csp13" class="endpoint-link">CSP 13</a>
+                <a href="/csp14" class="endpoint-link">CSP 14</a>
+                <a href="/csp15" class="endpoint-link">CSP 15</a>
+                <a href="/csp16" class="endpoint-link">CSP 16</a>
+                <a href="/csp17" class="endpoint-link">CSP 17</a>
+                <a href="/csp18" class="endpoint-link">CSP 18</a>
+                <a href="/csp19" class="endpoint-link">CSP 19</a>
+                <a href="/csp20" class="endpoint-link">CSP 20</a>
+                <a href="/csp21" class="endpoint-link">CSP 21</a>
+                <a href="/csp22" class="endpoint-link">CSP 22</a>
+                <a href="/csp23" class="endpoint-link">CSP 23</a>
+                <a href="/csp24" class="endpoint-link">CSP 24</a>
+                <a href="/csp25" class="endpoint-link">CSP 25</a>
+                <a href="/csp26" class="endpoint-link">CSP 26</a>
+                <a href="/csp27" class="endpoint-link">CSP 27</a>
+                <a href="/csp28" class="endpoint-link">CSP 28</a>
+                <a href="/csp40" class="endpoint-link">CSP 40</a>
+                <a href="/csp41" class="endpoint-link">CSP 41</a>
+                <a href="/csp42" class="endpoint-link">CSP 42</a>
+                <a href="/csp43" class="endpoint-link">CSP 43</a>
+                <a href="/csp44" class="endpoint-link">CSP 44</a>
+                <a href="/csp45" class="endpoint-link">CSP 45</a>
+                <a href="/csp46" class="endpoint-link">CSP 46</a>
+            </div>
+        </div>
+
+        <div class="test-script">
+            <h3>Test Script</h3>
+            <p>This script will test if inline JavaScript is allowed by the current CSP policy:</p>
+            <button onclick="alert('Inline script executed successfully!')">Test Inline Script</button>
+        </div>
+    </div>
+
+    <script>
+        // Display the current CSP policy
+        function displayCSP() {
+            // Try to get CSP from meta tag or show that it's set via headers
+            const metaCSP = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+            const cspElement = document.getElementById('csp-policy');
+            
+            if (metaCSP) {
+                cspElement.textContent = metaCSP.getAttribute('content');
+            } else {
+                cspElement.textContent = 'Set via HTTP headers (check DevTools Network tab)';
+            }
+        }
+
+        // Test function for inline scripts
+        function testInlineScript() {
+            try {
+                eval('console.log("Eval test successful");');
+                console.log('Eval execution allowed');
+            } catch (e) {
+                console.log('Eval blocked by CSP:', e.message);
+            }
+        }
+
+        // Run tests when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            displayCSP();
+            testInlineScript();
+            
+            // Test dynamic script creation
+            try {
+                const script = document.createElement('script');
+                script.textContent = 'console.log("Dynamic script test");';
+                document.head.appendChild(script);
+            } catch (e) {
+                console.log('Dynamic script blocked:', e.message);
+            }
+        });
+    </script>
+</body>
+</html>
