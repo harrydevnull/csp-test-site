@@ -104,13 +104,7 @@ jobs:
       with:
         name: ${{ env.APP_NAME }}-${{ github.sha }}
     
-    - name: Setup SSH key
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.LINODE_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ secrets.LINODE_HOST }} >> ~/.ssh/known_hosts
-    
+
     - name: Deploy to Linode
       run: |
         # Upload the deployment package
