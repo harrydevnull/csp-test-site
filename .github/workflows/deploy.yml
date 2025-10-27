@@ -22,7 +22,7 @@ jobs:
         go-version: ${{ env.GO_VERSION }}
     
     - name: Cache Go modules
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.cache/go-build
@@ -57,7 +57,7 @@ jobs:
         go-version: ${{ env.GO_VERSION }}
     
     - name: Cache Go modules
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.cache/go-build
@@ -87,7 +87,7 @@ jobs:
         tar -czf ${{ env.APP_NAME }}-${{ github.sha }}.tar.gz -C deploy .
     
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ env.APP_NAME }}-${{ github.sha }}
         path: ${{ env.APP_NAME }}-${{ github.sha }}.tar.gz
@@ -100,7 +100,7 @@ jobs:
     
     steps:
     - name: Download build artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: ${{ env.APP_NAME }}-${{ github.sha }}
     
